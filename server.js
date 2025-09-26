@@ -61,8 +61,12 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:3000", 
+    origin: [
+      "http://localhost:3000",                  // for local dev
+      "https://your-frontend.vercel.app"        // your Vercel domain
+    ],
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 
