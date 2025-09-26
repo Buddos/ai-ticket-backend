@@ -1,8 +1,8 @@
 // server.js
 const express = require("express");
 const cors = require("cors");
-const http = require("http");           // ✅ http wrapper
-const { Server } = require("socket.io"); // ✅ Socket.IO
+const http = require("http"); // HTTP wrapper for Socket.IO
+const { Server } = require("socket.io");
 require("dotenv").config();
 
 const sequelize = require("./config/db");
@@ -13,7 +13,7 @@ const sequelize = require("./config/db");
 require("./models/User");
 require("./models/Role");
 require("./models/UserRole");
-require("./models/Message"); // <-- NEW
+require("./models/Message");
 
 // -----------------------------
 // ✅ Import routes
@@ -31,7 +31,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Root test route
+// Root route
 app.get("/", (req, res) => {
   res.send("Support System API with Sequelize + Socket.IO is running...");
 });
@@ -49,10 +49,10 @@ app.use("/api/messages", messageRoutes);
 sequelize.authenticate()
   .then(() => {
     console.log("✅ PostgreSQL connected");
-    return sequelize.sync(); // { alter: true } for dev schema updates
+    return sequelize.sync(); // { alter: true } can be used during dev
   })
   .then(() => console.log("✅ Database synced"))
-  .catch(err => console.error("❌ DB connection error:", err));
+  .catch((err) => console.error("❌ DB connection error:", err));
 
 // -----------------------------
 // ✅ Setup Socket.IO
@@ -61,7 +61,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // change to frontend domain when deployed
+    origin: process.env.FRONTEND_URL || "http://localhost:3000", 
     methods: ["GET", "POST"],
   },
 });
@@ -72,24 +72,28 @@ const messageService = require("./services/messageService");
 io.on("connection", (socket) => {
   console.log("🔌 User connected:", socket.id);
 
-  // join a ticket room
+  // Join a ticket-specific room
   socket.on("joinRoom", (ticketId) => {
     socket.join(`ticket_${ticketId}`);
     console.log(`📌 User ${socket.id} joined ticket_${ticketId}`);
   });
 
-  // send + save message
+  // Handle new message
   socket.on("sendMessage", async (data) => {
     const { ticketId, message, senderId } = data;
 
     try {
-      // Save message in DB
-      const savedMessage = await messageService.createMessage(ticketId, senderId, message);
+      // ✅ Save to DB
+      const savedMessage = await messageService.createMessage(
+        ticketId,
+        senderId,
+        message
+      );
 
-      // Broadcast to room
+      // ✅ Emit message to all clients in that room
       io.to(`ticket_${ticketId}`).emit("new_message", savedMessage);
     } catch (err) {
-      console.error("❌ Error saving message:", err);
+      console.error("❌ Error saving message:", err.message);
     }
   });
 
@@ -102,6 +106,6 @@ io.on("connection", (socket) => {
 // ✅ Start server
 // -----------------------------
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () =>
-  console.log(`🚀 Server + WebSocket running on port ${PORT}`)
-);
+server.listen(PORT, () => {
+  console.log(`🚀 Server + WebSocket running on port ${PORT}`);
+});

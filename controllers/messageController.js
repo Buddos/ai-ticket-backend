@@ -1,4 +1,4 @@
-// src/controllers/messageController.js
+// controllers/messageController.js
 const messageService = require("../services/messageService");
 
 async function createMessage(req, res) {
@@ -21,7 +21,4 @@ async function getMessages(req, res) {
   }
 }
 
-module.exports = {
-  createMessage,
-  getMessages,
-};
+module.exports = { createMessage, getMessages };
