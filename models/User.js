@@ -1,3 +1,7 @@
+// models/User.js
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db"); // make sure this exports your initialized Sequelize instance
+
 const User = sequelize.define(
   "User",
   {
@@ -9,5 +13,8 @@ const User = sequelize.define(
   },
   {
     tableName: "User", // force exact table name
+    timestamps: true,  // include createdAt and updatedAt
   }
 );
+
+module.exports = User;
